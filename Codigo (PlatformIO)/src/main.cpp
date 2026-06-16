@@ -15,7 +15,7 @@
 #define PIN_BIN1 1 //4
 #define PIN_BIN2 0 //3
 
-#define MAX_SPEED 220
+#define MAX_SPEED 200
 
 // --- TU STRUCT MOTOR SHIELD ---
 struct MotorShield {
@@ -113,7 +113,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           forwardSpeed = map(rawY, 0, 4095, MAX_SPEED, -MAX_SPEED);
         }
         
-        if (abs(rawX - 2048) > 300) {
+        if (abs(rawX - 2048) > 600) {
           // Mapeamos X: Valores bajos -> Izquierda (-255), Valores altos -> Derecha (255)
           steeringSpeed = map(rawX, 0, 4095, -MAX_SPEED, MAX_SPEED);
         }
