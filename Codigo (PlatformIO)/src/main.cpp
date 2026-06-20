@@ -4,24 +4,22 @@
 #include <Arduino.h>
 
 // UUIDs de conexión (Deben coincidir con tu Emisor)
-#define SERVICE_UUID        "B07A"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+static BLEUUID serviceUUID("B07B");
+static BLEUUID charUUID("c0de0002-feed-babe-cafe-00000000000b");
 
 // 📌 DECLARACIÓN DE PINES PARA EL TB6612FNG (Ajusta según tu PCB)
-#define PIN_PWMA 2 //5
-#define PIN_AIN1 3 //0
-#define PIN_AIN2 4 // 1
-#define PIN_PWMB 5 //2
-#define PIN_BIN1 1 //4
-#define PIN_BIN2 0 //3
-
-#define MAX_SPEED 200
+#define PIN_PWMA 0
+#define PIN_AIN1 1 
+#define PIN_AIN2 2 
+#define PIN_PWMB 3 
+#define PIN_BIN1 4 
+#define PIN_BIN2 5 
 
 // --- TU STRUCT MOTOR SHIELD ---
 struct MotorShield {
     int left_pwm_pin, left_a_pin, left_b_pin;
     int right_pwm_pin, right_a_pin, right_b_pin;
-    int MAX_SPEED_2 = 255;
+    int MAX_SPEED = 255;
 
     MotorShield(){}
 
@@ -34,7 +32,7 @@ struct MotorShield {
         right_a_pin = b_1;
         right_b_pin = b_2;
         
-        MAX_SPEED_2 = max_speed;
+        MAX_SPEED = max_speed;
         
         pinMode(left_pwm_pin, OUTPUT); pinMode(left_a_pin, OUTPUT); pinMode(left_b_pin, OUTPUT);
         pinMode(right_pwm_pin, OUTPUT); pinMode(right_a_pin, OUTPUT); pinMode(right_b_pin, OUTPUT);
@@ -110,12 +108,12 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         // Centro del ESP32 ADC es ~2048. Tolerancia de +/- 300
         if (abs(rawY - 2048) > 300) {
           // Mapeamos Y: Valores bajos -> Adelante (255), Valores altos -> Atrás (-255)
-          forwardSpeed = map(rawY, 0, 4095, MAX_SPEED, -MAX_SPEED);
+          forwardSpeed = map(rawY, 0, 4095, 255, -255);
         }
         
-        if (abs(rawX - 2048) > 600) {
+        if (abs(rawX - 2048) > 300) {
           // Mapeamos X: Valores bajos -> Izquierda (-255), Valores altos -> Derecha (255)
-          steeringSpeed = map(rawX, 0, 4095, -MAX_SPEED, MAX_SPEED);
+          steeringSpeed = map(rawX, 0, 4095, -255, 255);
         }
 
         // 🏎️ MEZCLA CINEMÁTICA (Arcade Drive)
@@ -123,8 +121,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         int rightMotor = forwardSpeed - steeringSpeed;
 
         // Aseguramos que los valores calculados no se escapen de los límites del Shield
-        leftMotor = constrain(leftMotor, -MAX_SPEED, MAX_SPEED);
-        rightMotor = constrain(rightMotor, -MAX_SPEED, MAX_SPEED);
+        leftMotor = constrain(leftMotor, -255, 255);
+        rightMotor = constrain(rightMotor, -255, 255);
 
         // Si el joystick está en el centro absoluto, apagamos motores por completo
         if (forwardSpeed == 0 && steeringSpeed == 0) {
